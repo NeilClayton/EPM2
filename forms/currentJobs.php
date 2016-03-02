@@ -5,7 +5,7 @@
 		<div class="centre"><h1>Your Jobs</h1></div>
 			<table class="center striped">
 				<th>Property Ref</th>
-				<th>Job ID</th>
+				<th>Title</th>
 				<th>Description</th>
 	
 	<?php

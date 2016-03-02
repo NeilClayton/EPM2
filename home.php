@@ -5,18 +5,37 @@
     $action->isLoggedIn(); //check if user is logged in
     $action->timedOut(); //check for in activity
 
-    if ((isset($_POST['propertyref'])) && (isset($_POST['postcode']))) {
+    if (isset($_POST['addProperty'])) {
         //if (isset($_POST['submit'])){
         $action->addProperty();
     }
 
-    if ((isset($_POST['contractorname']))) {
+
+    if ((isset($_POST['addContractor']))) {
         $action->addContractor();
     }
 
-    if ((isset($_POST['description']))){
+    if ((isset($_POST['addJob']))){
         $action->addJob();
     }
+
+    if ((isset($_POST['update']))) {
+        $action->updatePropertyinDB();
+    }
+
+    if ((isset($_POST['updateContractor']))){
+        $action->updateContractorinDB();
+    }
+
+    if ((isset($_POST['updateJob']))){
+    $action->updateJobinDB();
+    }
+
+    if ((isset($_POST['currentPassword'])) && (isset($_POST['password1'])) && (isset($_POST['password2']))){
+        $action->changePassword();
+    }
+
+
 ?>
 
 <!DOCTYPE html>
@@ -74,8 +93,8 @@
                         <div class="btn-group" role="group" aria-label="...">
                             <button type="button" class="propertyLoad btn btn-default">View</button>
                             <button type="button" class="addProperty btn btn-default">Add</button>
-                            <button type="button" class="btn btn-default">Update</button>
-                            <button type="button" class="btn btn-default">Delete</button>
+                            <button type="button" class="updateProperty btn btn-default">Update</button>
+                            <button type="button" class="deleteProperty btn btn-default">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -90,8 +109,8 @@
                         <div class="btn-group" role="group" aria-label="...">
                             <button type="button" class="contractorLoad btn btn-default">View</button>
                             <button type="button" class="addContractor btn btn-default">Add</button>
-                            <button type="button" class="btn btn-default">Update</button>
-                            <button type="button" class="btn btn-default">Delete</button>
+                            <button type="button" class="updateContractor btn btn-default">Update</button>
+                            <button type="button" class="deleteContractor btn btn-default">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -106,8 +125,8 @@
                         <div class="btn-group" role="group" aria-label="...">
                             <button type="button" class="jobLoad btn btn-default">View</button>
                             <button type="button" class="addJob btn btn-default">Add</button>
-                            <button type="button" class="btn btn-default">Update</button>
-                            <button type="button" class="btn btn-default">Delete</button>
+                            <button type="button" class="updateJob btn btn-default">Update</button>
+                            <button type="button" class="deleteJob btn btn-default">Delete</button>
                         </div>
                     </div>
                 </div>

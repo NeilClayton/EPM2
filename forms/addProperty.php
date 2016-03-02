@@ -23,6 +23,8 @@
             <br><br>
             <label for email class="col-md-2 col-md-offset-2 col-sm-12">Email</label><input class="col-md-6 col-sm-12" type = "text" name="email" size="50">
             <br><br>
+            <input type="checkbox" name="addProperty" value="addProperty" required> &nbsp; Tick to confirm details are correct
+            <br><br>
             <input class="AddBtn" type="submit" value="Add" name="submit">
 
             </fieldset>
