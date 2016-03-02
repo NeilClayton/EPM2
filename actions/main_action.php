@@ -57,14 +57,65 @@
                 $_SESSION['customerID'] = $num['customerID'];
                 $_SESSION['last_action'] = time();
 
-                header('location:home.php');
+                if ($_SESSION['customerID'] == 1){
+                    header('location:admin/admin.php');
+                }
+                else{
+                    header('location:home.php');
+                }
+
 
             } else {
                 header('location:../failed.php');
             }
         }
 
-        /* end of login function*/
+        //function allows user to change their password
+        function changePassword(){
+            $thispass = md5($_POST['currentPassword']);
+            if ($_POST['password1']== $_POST['password2']){
+                $newPass = md5($_POST['password1']);
+                include_once 'includes/db.php';
+
+                try{
+                    $sql = "SELECT password FROM users WHERE userID = :thisUserID";
+                    $result = $pdo->prepare($sql);
+
+                    $result->bindParam('thisUserID', $_SESSION['userID']);
+
+                    $result->execute();
+                    $num = $result->fetch(PDO::FETCH_ASSOC);
+
+                    if ($thispass == $num['password']){
+                        try{
+                            $sql = "UPDATE users SET password = :newPassword WHERE userID = :thisUserID";
+                            $result = $pdo->prepare($sql);
+
+                            $result->bindParam(':newPassword', $newPass);
+                            $result->bindParam(':thisUserID', $_SESSION['userID']);
+
+                            $result->execute();
+                            echo "<script> alert('Your Password has been updated')</script>";
+
+                        } catch (PDOException $e){
+                            echo "ERROR!: " . $e->getMessage();
+                        }
+                    }
+                    else{
+                        echo "<script> alert('Current Password is incorrect')</script>";
+                    }
+
+                } catch (PDOException $e){
+                    echo "ERROR!: ". $e->getMessage();
+                    exit();
+                }
+
+            }
+            else {
+                echo "<script> alert('Passwords do not match')</script>";
+            }
+
+        }
 
         //Check to ensure user is logged in and not trying to bypass the login screen
         function isLoggedIn()
@@ -74,7 +125,7 @@
             }
         }
 
-        /* end of isLoggedIn function*/
+
 
         //Used to determine if the user has been inactive for 15 mins or more. If they have destroy session and
         //redirect to index.php
@@ -88,7 +139,7 @@
             }
         }
 
-        /* end of timedOut function */
+
 
         //sql query the db to return all property data associated with the users organisation
         function grabPropertyData()
@@ -97,7 +148,7 @@
             include '../actions/controller.php';
             $controller = new Controller();
             try {
-                $sql = "SELECT * FROM properties WHERE customerID = :custID";
+                $sql = "SELECT * FROM properties WHERE customerID = :custID ";
 
                 $result = $pdo->prepare($sql);
 
@@ -121,8 +172,8 @@
             $controller = new Controller();
             try {
 
-                $sql = "SELECT * FROM joblist LEFT JOIN properties ON joblist.propertyID = properties.propertyID WHERE
-						properties.customerID = :custID";
+                $sql = "SELECT * FROM joblist LEFT JOIN properties ON joblist.propertyID = properties.propertyID
+                        LEFT JOIN jobnotes ON joblist.jobID = jobnotes.jobID WHERE properties.customerID = :custID";
 
                 //$sql = "SELECT * FROM properties LEFT JOIN joblist ON properties.propertyID = joblist.propertyID
                 //	WHERE properties.customerID = :custID";
@@ -139,6 +190,28 @@
 
         }
 
+        function updateableJobs(){
+            include '../includes/db.php';
+            include '../actions/controller.php';
+            $controller = new Controller();
+            try {
+
+                $sql = "SELECT * FROM joblist LEFT JOIN properties ON joblist.propertyID = properties.propertyID
+                        LEFT JOIN jobnotes ON joblist.jobID = jobnotes.jobID WHERE properties.customerID = :custID";
+
+                //$sql = "SELECT * FROM properties LEFT JOIN joblist ON properties.propertyID = joblist.propertyID
+                //	WHERE properties.customerID = :custID";
+
+                $result = $pdo->prepare($sql);
+                $result->bindParam(":custID", $_SESSION['customerID']);
+                $result->execute();
+                $controller->printUpdateableJobs($result);
+
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+        }
         //SQL query database to return all contractors that are associated with the users organisation
         function getCurrentContractors()
         {
@@ -147,8 +220,7 @@
             $controller = new Controller();
             try {
                 $sql = "SELECT * FROM contractors LEFT JOIN propertycontractors ON contractors.contractorID =
-                        propertycontractors.contractorID WHERE propertycontractors.customerID IN(select propertyID
-                        FROM properties WHERE customerID = :custID)";
+                        propertycontractors.contractorID WHERE customerID = :custID";
                 $result = $pdo->prepare($sql);
                 $result->bindParam(":custID", $_SESSION['customerID']);
                 $result->execute();
@@ -159,6 +231,9 @@
             }
         }
 
+
+
+        //function used to add new properties to the database
         function addProperty()
         {
             include '/includes/db.php';
@@ -194,24 +269,23 @@
         }
 
 
-
+        //function used to add new jobs to the database
         function addJob(){
 
             include '/includes/db.php';
-            $propertyID = $_SESSION['propertyID'];
 
             try{
+
                 $sql = "INSERT INTO joblist (propertyID, jobdescription) VALUES (:propID, :jobTitle);
-                        INSERT INTO jobnotes (jobID, description) VALUES (LAST_INSERT_ID(), :descrip);";
+                       INSERT INTO jobnotes (jobID, description) VALUES (LAST_INSERT_ID(), :descrip);";
+
                 $result= $pdo->prepare($sql);
-                $result->bindParam(":propID", $propertyID);
+                $result->bindParam(":propID", $_POST['property'], PDO::PARAM_INT);
                 $result->bindParam(":jobTitle", $_POST['description']);
                 $result->bindParam(":descrip", $_POST['jobdescription']);
                 $result->execute();
-            //STUCK HERE, PROPERTY ID IS NOT BEING INSERTED AND SECOND INSERT IS NOT RUNNING AT ALL
-                //LAST_INSERT_ID MAY NOT BE WORKING AT ALL????
 
-
+                self::update("job", "added");
 
             } Catch (PDOException $e){
                 echo "ERROR!: " . $e;
@@ -219,7 +293,7 @@
             }
         }
 
-
+        //function used in order to add new contractors to the database
         function addContractor()
         {
             include '/includes/db.php';
@@ -301,6 +375,289 @@
             }
         }
 
+        //gets all properties from the DB related to the customer and calls controller to print to screen
+        function printPropertiesToUpdate(){
+            include '../includes/db.php';
+            include '../actions/controller.php';
+            $controller = new Controller();
+            try {
+                $sql = "SELECT * FROM properties WHERE customerID = :custID";
 
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":custID", $_SESSION['customerID']);
+
+                $result->execute();
+
+                $controller->printPropertiesToUpdate($result);
+
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+        }
+        //function selects single property from DB and assigns values to session variable
+        function selectOneProptery($ID){
+            include '../includes/db.php';
+            try {
+                $sql = "SELECT * FROM properties WHERE propertyID = :propID";
+
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":propID", $ID);
+
+                $result->execute();
+
+
+                while($row=$result->fetch(PDO::FETCH_ASSOC)) {
+                    $_SESSION['propertyref'] = $row['propertyref'];
+                    $_SESSION['address1'] = $row['address1'];
+                    $_SESSION['address2'] = $row['address2'];
+                    $_SESSION['town'] = $row['town'];
+                    $_SESSION['county'] = $row['county'];
+                    $_SESSION['postcode'] = $row['postcode'];
+                    $_SESSION['tel'] = $row['tel'];
+                    $_SESSION['fax'] = $row['fax'];
+                    $_SESSION['email'] = $row['email'];
+                }
+
+
+
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+
+        }
+
+        function selectOneContractor($ID){
+            include '../includes/db.php';
+            try {
+                $sql = "SELECT * FROM contractors WHERE contractorID = :conID";
+
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":conID", $ID);
+
+                $result->execute();
+
+
+                while($row=$result->fetch(PDO::FETCH_ASSOC)) {
+                    $_SESSION['conCompanyname'] = $row['companyname'];
+                    $_SESSION['conContact'] = $row['contact'];
+                    $_SESSION['conAddress1'] = $row['address1'];
+                    $_SESSION['conAddress2'] = $row['address2'];
+                    $_SESSION['conTown'] = $row['town'];
+                    $_SESSION['conCounty'] = $row['county'];
+                    $_SESSION['conPostcode'] = $row['postcode'];
+                    $_SESSION['conTel'] = $row['tel'];
+                    $_SESSION['conMobile'] = $row['mobile'];
+                    $_SESSION['conEmail'] = $row['email'];
+                    $_SESSION['conNotes'] = $row['notes'];
+                }
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+        }
+        function selectOneJob($ID){
+            include '../includes/db.php';
+            try {
+                $sql = "SELECT * FROM joblist LEFT JOIN properties ON joblist.propertyID = properties.propertyID
+                        LEFT JOIN jobnotes ON joblist.jobID = jobnotes.jobID WHERE joblist.jobID = :thisJobID";
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":thisJobID", $ID);
+
+                $result->execute();
+
+
+                while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                    $_SESSION['jobTitle'] = $row['jobdescription'];
+                    $_SESSION['jobDescription'] = $row['description'];
+                }
+            } catch (PDOException $e) {
+                    echo "ERROR!: " . $e->getMessage();
+                    exit();
+                }
+        }
+
+
+
+
+        // updates property in the DB with what the user has entered
+        function updatePropertyinDB(){
+            include 'includes/db.php';
+            try{
+                $sql = "UPDATE properties SET propertyref = :propref, address1 = :add1, address2 = :add2,
+                          town = :twn, county = :coun, postcode = :pc, tel = :telephone, fax = :facsimile, email = :em
+                          WHERE propertyID = :propID";
+
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":propref", $_POST['propertyref']);
+                $result->bindParam(":add1", $_POST['address1']);
+                $result->bindParam(":add2", $_POST['address2']);
+                $result->bindParam(":twn", $_POST['town']);
+                $result->bindParam(":coun", $_POST['county']);
+                $result->bindParam(":pc", $_POST['postcode']);
+                $result->bindParam(":telephone", $_POST['tel']);
+                $result->bindParam(":facsimile", $_POST['fax']);
+                $result->bindParam(":em", $_POST['email']);
+                $result->bindParam(":propID", $_SESSION['propertyID']);
+
+                $result->execute();
+                //call update function to notify user that the property has been updated
+                self::update('property information', 'updated');
+
+
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+
+        }
+
+        function updateContractorinDB(){
+            include 'includes/db.php';
+            try{
+                $sql = "UPDATE contractors SET companyname = :compname, contact = :cont, address1 = :add1, address2 = :add2,
+                          town = :twn, county = :coun, postcode = :pc, tel = :telephone, mobile = :mob, email = :em, notes = :note
+                          WHERE contractorID = :contID";
+
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":compname", $_POST['contractorname']);
+                $result->bindParam(":cont", $_POST['contact']);
+                $result->bindParam(":add1", $_POST['address1']);
+                $result->bindParam(":add2", $_POST['address2']);
+                $result->bindParam(":twn", $_POST['town']);
+                $result->bindParam(":coun", $_POST['county']);
+                $result->bindParam(":pc", $_POST['postcode']);
+                $result->bindParam(":telephone", $_POST['tel']);
+                $result->bindParam(":mob", $_POST['mobile']);
+                $result->bindParam(":em", $_POST['email']);
+                $result->bindParam(":note", $_POST['notes']);
+                $result->bindParam(":contID", $_SESSION['contractorID']);
+
+                $result->execute();
+                //call update function to notify user that the property has been updated
+                self::update('contractor information', 'updated');
+
+
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+        }
+
+        function updateJobinDB(){
+            include 'includes/db.php';
+
+            try{
+                $sql = "UPDATE joblist SET jobdescription = :jobTitle WHERE joblist.jobID = :thisJobID;
+                        UPDATE jobnotes SET description = :jobDescription WHERE jobnote.jobID = :thisJobID";
+
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":jobTitle", $_POST['description']);
+                $result->bindParam(":jobDescription", $_POST['jobdescription']);
+                $result->bindParam(":thisJobID", $_SESSION['jobID']);
+                $result->execute();
+
+                self::update('job', 'updated');
+
+            } catch (PDOException $e){
+                echo "ERROR!: " . $e->getMessage();
+                exit();
+            }
+        }
+        function deletableProperties(){
+            include '../includes/db.php';
+            include '../actions/controller.php';
+            $controller = new Controller();
+            try {
+                $sql = "SELECT * FROM properties WHERE customerID = :custID";
+
+                $result = $pdo->prepare($sql);
+
+                $result->bindParam(":custID", $_SESSION['customerID']);
+
+                $result->execute();
+
+                $controller->printDeletableProperties($result);
+
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+        }
+
+        function deleteableContractors(){
+            include '../includes/db.php';
+            include '../actions/controller.php';
+            $controller = new Controller();
+            try {
+                $sql = "SELECT * FROM contractors LEFT JOIN propertycontractors ON contractors.contractorID =
+                        propertycontractors.contractorID WHERE customerID = :custID";
+                $result = $pdo->prepare($sql);
+                $result->bindParam(":custID", $_SESSION['customerID']);
+                $result->execute();
+                $controller->printDeletableContractors($result);
+            } Catch (PDOException $e){
+                echo "ERROR!: " . $e;
+                exit();
+            }
+        }
+
+        function deletableJobs(){
+            include '../includes/db.php';
+            include '../actions/controller.php';
+            $controller = new Controller();
+            try {
+
+                $sql = "SELECT * FROM joblist LEFT JOIN properties ON joblist.propertyID = properties.propertyID
+                        LEFT JOIN jobnotes ON joblist.jobID = jobnotes.jobID WHERE properties.customerID = :custID";
+
+                //$sql = "SELECT * FROM properties LEFT JOIN joblist ON properties.propertyID = joblist.propertyID
+                //	WHERE properties.customerID = :custID";
+
+                $result = $pdo->prepare($sql);
+                $result->bindParam(":custID", $_SESSION['customerID']);
+                $result->execute();
+                $controller->printDeletableJobs($result);
+
+            } catch (PDOException $e) {
+                echo "ERROR!: " . $e . getMessage();
+                exit();
+            }
+
+        }
+
+        function deleteProperty($data){
+
+            echo "<script>alert('$data') </script>";
+
+        }
+
+
+
+        function getUpdateableContractors()
+        {
+            include '../includes/db.php';
+            include '../actions/controller.php';
+            $controller = new Controller();
+            try {
+                $sql = "SELECT * FROM contractors LEFT JOIN propertycontractors ON contractors.contractorID =
+                        propertycontractors.contractorID WHERE customerID = :custID";
+                $result = $pdo->prepare($sql);
+                $result->bindParam(":custID", $_SESSION['customerID']);
+                $result->execute();
+                $controller->printContractorToUpdate($result);
+            } Catch (PDOException $e) {
+                echo "ERROR!: " . $e->getMessage();
+                exit();
+            }
+        }
     }
 ?>

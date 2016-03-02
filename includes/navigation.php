@@ -28,6 +28,9 @@
                     <li>
 						<a href="actions/logout.php">Logout</a>
 					</li>
+                    <li>
+                        <a href="#" class="changePassword">Change Password</a>
+                    </li>
                 </ul>
             </div>
             <!-- /.navbar-collapse -->
