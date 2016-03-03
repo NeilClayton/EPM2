@@ -1,0 +1,129 @@
+
+body {
+	margin-top: 50px;
+	margin-bottom: 50px;
+	background: none;
+	color: #000;
+}
+
+p{
+	font-weight: bold;	
+}
+
+.whiteOpacity{
+	padding: 5px 5px 5px 5px;
+	background: rgba(255,255,255, 0.7);
+	text-align: center;
+	border-radius: 10px;
+    padding:15px;
+}
+
+
+.fullLogin {
+  background: url(../images/loginBG.png) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+
+.full {
+  background: url(../images/bg.png) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+.fullAbout{
+  background: url(../images/about.png) no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+
+}
+
+.fullAdmin{
+    background: url(../images/admin.png) no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+.center{
+  text-align: center;
+  margin: 0 auto;
+}
+
+.membersBtn{
+  background: rgba(255,255,255,0.6);
+  -webkit-border-radius: 28;
+  -moz-border-radius: 28;
+  border-radius: 28px;
+  font-family: Arial;
+  color: #ffffff;
+  font-size: 15px;
+  padding: 10px 20px 10px 20px;
+  text-decoration: none;
+  color: rgba(0,0,0,0.6);
+  font-weight: bold;
+}
+
+.membersBtn:hover{
+  background: rgba(108,253,44,0.9);
+  color: #fff;
+}
+
+.loginBtn{
+  -webkit-border-radius: 28;
+  -moz-border-radius: 28;
+  border-radius: 28px;
+  font-family: Arial;
+  color: #ffffff;
+  font-size: 15px;
+  background: #3498db;
+  padding: 10px 20px 10px 20px;
+  text-decoration: none;
+}
+
+.loginBtn:hover {
+  background: #0a7bc2;
+  text-decoration: none;
+}
+.logo{
+  width:100%;
+  height:100%;
+}
+
+#caps{
+  font-weight: bold;
+  color: #000;
+  background: #ff0000;
+}
+
+.justified{
+  text-align: justify;
+}
+
+th{
+	text-align:center;
+	padding-right: 30px;
+}
+
+td{
+	text-align:center;
+	padding-top: 10px;
+    padding-left: 10px;
+    font-face:word-break;
+}
+
+textarea{
+  resize: none;
+}
+
+.break{
+  clear:both;
+}
